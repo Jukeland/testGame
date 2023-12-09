@@ -1,3 +1,5 @@
+#include "dog_lib.h"
+
 //  #######################################################################################
 //                                   Platform Globals
 //  #######################################################################################
@@ -8,7 +10,8 @@ static bool running = true;
 //                                  Platform Functions
 //  #######################################################################################
 
-bool platformCreateWindow(int width, int height, char* title);
+bool platform_create_window(int width, int height, char* title);
+void platform_update_window();
 
 //  #######################################################################################
 //                                  Windows Platform
@@ -23,13 +26,30 @@ bool platformCreateWindow(int width, int height, char* title);
 //                                  Windows Globals
 //  #######################################################################################
 
-
+static HWND window;
 
 //  #######################################################################################
 //                                Platform Implementations
 //  #######################################################################################
 
-bool platformCreateWindow(int width, int height, char* title){
+LRESULT CALLBACK windows_window_callback(HWND window, UINT msg, WPARAM wParam, LPARAM lParam){
+    LRESULT result = 0;
+
+    switch(msg){
+        case WM_CLOSE:{
+            running = false;
+            break;
+            }
+        
+        default:{
+            result = DefWindowProcA(window, msg, wParam, lParam);
+        }
+    }
+
+    return result;
+}
+
+bool platform_create_window(int width, int height, char* title){
 
     HINSTANCE instance = GetModuleHandleA(0);
 
@@ -38,7 +58,7 @@ bool platformCreateWindow(int width, int height, char* title){
     wc.hIcon = LoadIcon(instance, IDI_APPLICATION);
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.lpszClassName = title;           // Not the title
-    wc.lpfnWndProc = DefWindowProcA;    // Callbakck for input into the window
+    wc.lpfnWndProc = windows_window_callback;    // Callbakck for input into the window
 
     if(!RegisterClassA(&wc)){
         return false;
@@ -46,7 +66,7 @@ bool platformCreateWindow(int width, int height, char* title){
 
     int dwStyle = WS_OVERLAPPEDWINDOW;
 
-    HWND window = CreateWindowExA(0, title, title, dwStyle, 100, 100, width, height, 
+    window = CreateWindowExA(0, title, title, dwStyle, 100, 100, width, height, 
                                     NULL, NULL, instance, NULL);
 
     if(window == NULL)
@@ -58,16 +78,30 @@ bool platformCreateWindow(int width, int height, char* title){
 
 }
 
+void platform_update_window(){
+
+    MSG message;
+    while(PeekMessageA(&message, window, 0, 0, PM_REMOVE)){
+        TranslateMessage(&message);
+        DispatchMessage(&message);
+    }
+
+}
+
 
 #endif
 
 int main(){
 
-    platformCreateWindow(1200, 720, "Dog");
+    platform_create_window(1200, 720, "Dog");
     while(running){
 
         // Update
+        platform_update_window();
 
+        SM_TRACE("Test");
+        SM_WARN("Test");
+        SM_ERROR("Test");
     }
 
     return 0;
